@@ -10,8 +10,15 @@ public class Week4_EnemyController : MonoBehaviour
 	private Rigidbody2D enemyBody;
 	private SpriteRenderer enemySprite; // for flipping enemy sprite
 	private bool marioAlive = true; //mario is alive at the beginning
+	private bool enemyAlive = true; //enemy is alive at the beginning/when activated
 
-	void Start()
+	private void OnEnable() //when enemy object is activated
+    {
+		enemyAlive = true;
+		originalX = transform.position.x; //change the original X to the new spawned position x, otherwise it will use the Original X position and Keep Flipping!
+	}
+
+    void Start()
 	{
 		enemyBody = GetComponent<Rigidbody2D>();
 		enemySprite = GetComponent<SpriteRenderer>(); //get sprite renderer component
@@ -85,13 +92,13 @@ public class Week4_EnemyController : MonoBehaviour
 		{
 			// check if collides on top
 			float yoffset = (other.transform.position.y - this.transform.position.y); //The idea is to check if the playerfs y location is higher than the enemyfs, If yes, then we the enemy is killed
-			if (yoffset > 0.75f)
+			if (yoffset > 0.75f && enemyAlive)
 			{
+				enemyAlive = false; //enemy is now dead
 				KillSelf(); //enemy is killed
 				CentralManager.centralManagerInstance.newEnemy(); //spawn new enemy
-				this.gameObject.SetActive(false);
 			}
-			else
+			else if (yoffset < 0.75f && enemyAlive)
 			{
 				// hurt player, call damagePlayer in Game Manager which will cast delegate OnPlayerDeath which will call EnemyRejoice and PlayerDiesSequence
 				CentralManager.centralManagerInstance.damagePlayer();
@@ -104,11 +111,11 @@ public class Week4_EnemyController : MonoBehaviour
 	{
 		// enemy dies
 		CentralManager.centralManagerInstance.increaseScore(); //add the score since Mario kills an enemy
+		StartCoroutine(flatten());
 		Debug.Log("Kill sequence ends");
 	}
 
 	// Coroutine for flatten, gradually animate the enemy being flattened onto the ground
-	/*
 	IEnumerator flatten()
 	{
 		Debug.Log("Flatten starts");
@@ -127,7 +134,7 @@ public class Week4_EnemyController : MonoBehaviour
 		this.gameObject.SetActive(false); //enemy is disabled, and returned to pool 
 		Debug.Log("Enemy returned to pool");
 		yield break;
-	}*/
+	}
 
 	// Rejoice animation when player is dead
 	void EnemyRejoice()
